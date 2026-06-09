@@ -1,3 +1,3 @@
-# Rextle-s_TOS
-A document containing my full TOS, please check it first before considering any commissions.
--My commission terms of service-
+# RextlesPages
+A document containing my full TOS and waitlist.
+Ill be updating it with more if i need to.
