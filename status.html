@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commission Status — Rextle</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #7a7f90;
+    --accent: #5b8cff;
+    --accent-soft: rgba(91,140,255,0.1);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245,158,11,0.1);
+    --success: #34d399;
+    --success-soft: rgba(52,211,153,0.08);
+    --danger: #f87171;
+    --danger-soft: rgba(248,113,113,0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    background-image: url("https://raw.githubusercontent.com/Rextle/RextlesPages/main/wall%20blur.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 12, 18, 0.82);
+    pointer-events: none; z-index: 0;
+  }
+
+  .noise {
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  .glow {
+    position: fixed; width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(91,140,255,0.06) 0%, transparent 70%);
+    top: -200px; left: -100px; pointer-events: none; z-index: 0;
+  }
+
+  .glow2 {
+    position: fixed; width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%);
+    bottom: -100px; right: -100px; pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 780px; margin: 0 auto;
+    padding: 0 1.5rem 5rem;
+  }
+
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  header img {
+    width: 160px; height: 160px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 1.25rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-soft);
+    border: 1px solid rgba(91,140,255,0.2);
+    padding: 4px 12px; border-radius: 100px;
+    margin-bottom: 1.25rem; font-weight: 500;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700; line-height: 1.1;
+    letter-spacing: -0.02em; color: #fff;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle { color: var(--muted); font-size: 14px; font-weight: 300; }
+
+  .bio {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;
+    font-size: 14.5px; color: #c4c8d6; line-height: 1.85;
+  }
+
+  /* ── CURRENT SLOT ── */
+  .current-card {
+    border-radius: 14px; padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .current-card.state-open {
+    background: var(--success-soft);
+    border-color: rgba(52,211,153,0.25);
+  }
+
+  .current-card.state-inprogress {
+    background: var(--accent-soft);
+    border-color: rgba(91,140,255,0.25);
+  }
+
+  .current-card.state-unavailable {
+    background: var(--danger-soft);
+    border-color: rgba(248,113,113,0.25);
+  }
+
+  .current-top {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .state-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%; flex-shrink: 0;
+  }
+
+  .state-open .state-dot    { background: var(--success); box-shadow: 0 0 10px rgba(52,211,153,0.5); animation: pulse-green 2s infinite; }
+  .state-inprogress .state-dot { background: var(--accent); box-shadow: 0 0 10px rgba(91,140,255,0.5); animation: pulse-blue 2s infinite; }
+  .state-unavailable .state-dot { background: var(--danger); }
+
+  @keyframes pulse-green { 0%,100%{box-shadow:0 0 6px rgba(52,211,153,0.4)}50%{box-shadow:0 0 14px rgba(52,211,153,0.8)} }
+  @keyframes pulse-blue  { 0%,100%{box-shadow:0 0 6px rgba(91,140,255,0.4)}50%{box-shadow:0 0 14px rgba(91,140,255,0.8)} }
+
+  .state-label {
+    font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700;
+  }
+
+  .state-open .state-label       { color: var(--success); }
+  .state-inprogress .state-label  { color: var(--accent); }
+  .state-unavailable .state-label { color: var(--danger); }
+
+  .state-desc { font-size: 14px; color: var(--muted); margin-bottom: 1rem; }
+
+  .current-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .detail-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border2);
+    border-radius: 8px; padding: 8px 12px;
+  }
+
+  .detail-pill-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .detail-pill-value { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  /* countdown */
+  .countdown-bar-wrap { margin-top: 14px; }
+  .countdown-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .countdown-value { font-size: 12px; color: var(--text); font-weight: 500; }
+  .bar-track { height: 5px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 100px; background: var(--accent); transition: width 0.5s ease; }
+  .bar-fill.warn { background: var(--warn); }
+  .bar-fill.danger { background: var(--danger); }
+
+  /* ── WAITLIST ── */
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 1rem;
+  }
+
+  .waitlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px; margin-bottom: 2rem;
+  }
+
+  .wslot {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.25rem;
+  }
+
+  .wslot-num {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;
+  }
+
+  .wslot-name {
+    font-size: 13.5px; color: var(--text); font-weight: 500; margin-bottom: 2px;
+  }
+
+  .wslot-tag {
+    font-size: 11px; display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 6px;
+  }
+
+  .wslot-tag::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  .wslot.queued .wslot-tag { color: var(--warn); }
+  .wslot.queued .wslot-tag::before { background: var(--warn); }
+
+  .wslot.next .wslot-tag { color: var(--success); }
+  .wslot.next .wslot-tag::before { background: var(--success); }
+
+  .wslot.pending .wslot-tag { color: var(--muted); }
+  .wslot.pending .wslot-tag::before { background: var(--muted); }
+  .wslot.pending { border-color: rgba(255,255,255,0.04); opacity: 0.7; }
+
+  .wslot.reserved .wslot-tag { color: var(--accent); }
+  .wslot.reserved .wslot-tag::before { background: var(--accent); }
+  .wslot.reserved { border-color: rgba(91,140,255,0.25); }
+
+  .wslot.empty .wslot-name { color: var(--muted); font-weight: 400; font-style: italic; }
+  .wslot.empty .wslot-tag { color: var(--muted); }
+  .wslot.empty .wslot-tag::before { background: var(--muted); opacity: 0.4; }
+
+  /* ── UPDATES ── */
+  .updates {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;
+  }
+
+  .update-item {
+    display: flex; gap: 1rem;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+  }
+
+  .update-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .update-item:first-child { padding-top: 0; }
+
+  .update-date { font-size: 12px; color: var(--muted); min-width: 80px; flex-shrink: 0; padding-top: 2px; }
+  .update-text { font-size: 14px; color: #c4c8d6; line-height: 1.6; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  footer {
+    border-top: 1px solid var(--border); padding-top: 2rem; margin-top: 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  footer p { font-size: 13px; color: var(--muted); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px;
+    padding: 10px 22px; border-radius: 8px; text-decoration: none;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text); }
+
+  @media (max-width: 540px) {
+    .current-details { grid-template-columns: 1fr 1fr; }
+    .waitlist-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="overlay"></div>
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="container">
+  <header>
+    <img src="https://raw.githubusercontent.com/Rextle/RextlesPages/main/EmblemAroura%20A.png" alt="Rextle emblem">
+    <div class="badge">Rextle — 3D Commissions</div>
+    <h1>Commission Status</h1>
+    <p class="subtitle">Live availability, current queue, and updates.</p>
+  </header>
+
+  <div class="bio">
+    I'm Rextle, a 3D character artist specialising in custom models and assets — from full character builds to outfits, accessories, expressions, and animations. Every model is made one at a time with full attention to your brief.
+  </div>
+
+  <!-- ╔═══════════════════════════════════════════════════════╗
+       ║  CURRENT STATUS — change the number below:           ║
+       ║    1 = Open        (accepting commissions)           ║
+       ║    2 = In Progress (actively working on something)   ║
+       ║    3 = Unavailable (not taking orders)               ║
+       ╚═══════════════════════════════════════════════════════╝ -->
+  <p class="section-title">Current</p>
+  <div class="current-card" id="current-card">
+    <div class="current-top">
+      <div class="state-dot" id="state-dot"></div>
+      <p class="state-label" id="state-label"></p>
+    </div>
+    <p class="state-desc" id="state-desc"></p>
+
+    <!-- Shown only when state = 2 (In Progress) -->
+    <div id="inprogress-details" style="display:none;">
+      <div class="current-details">
+        <div class="detail-pill">
+          <p class="detail-pill-label">Started</p>
+          <p class="detail-pill-value" id="detail-started">—</p>
+        </div>
+        <div class="detail-pill">
+          <p class="detail-pill-label">Est. delivery</p>
+          <p class="detail-pill-value" id="detail-delivery">—</p>
+        </div>
+        <div class="detail-pill">
+          <p class="detail-pill-label">Type</p>
+          <!-- ► CHANGE THIS to what you're working on e.g. "Character model", "Outfit add-on" -->
+          <p class="detail-pill-value">Character model</p>
+        </div>
+      </div>
+      <div class="countdown-bar-wrap">
+        <div class="countdown-row">
+          <span>Time elapsed</span>
+          <span class="countdown-value" id="elapsed-text">—</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="elapsed-bar" style="width:0%"></div></div>
+        <div class="countdown-row" style="margin-top:5px;">
+          <span>Est. remaining</span>
+          <span class="countdown-value" id="remaining-text">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ╔═══════════════════════════════════════════════════════╗
+       ║  WAITLIST — set each slot's number and name below    ║
+       ║  in the script at the bottom of the file             ║
+       ╚═══════════════════════════════════════════════════════╝ -->
+  <p class="section-title">Waitlist</p>
+  <div class="waitlist-grid">
+    <div class="wslot" id="wslot-1">
+      <p class="wslot-num">Slot 1</p>
+      <p class="wslot-name" id="wslot-1-name"></p>
+      <span class="wslot-tag" id="wslot-1-tag"></span>
+    </div>
+    <div class="wslot" id="wslot-2">
+      <p class="wslot-num">Slot 2</p>
+      <p class="wslot-name" id="wslot-2-name"></p>
+      <span class="wslot-tag" id="wslot-2-tag"></span>
+    </div>
+    <div class="wslot" id="wslot-3">
+      <p class="wslot-num">Slot 3</p>
+      <p class="wslot-name" id="wslot-3-name"></p>
+      <span class="wslot-tag" id="wslot-3-tag"></span>
+    </div>
+  </div>
+
+  <!-- ╔═══════════════════════════════════════════════════════╗
+       ║  UPDATES — add new entries at the TOP                ║
+       ║  Format:                                             ║
+       ║  <div class="update-item">                           ║
+       ║    <p class="update-date">Jun 2026</p>               ║
+       ║    <p class="update-text">Your note here.</p>        ║
+       ║  </div>                                              ║
+       ╚═══════════════════════════════════════════════════════╝ -->
+  <p class="section-title">Updates</p>
+  <div class="updates">
+    <div class="update-item">
+      <p class="update-date">Jun 2026</p>
+      <p class="update-text">Commission page and ToS launched. Waitlist is open — fill out the form to apply.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <footer>
+    <p>Last updated June 2026</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="https://rextle.github.io/RextlesPages/" class="btn btn-ghost">Terms of Service ↗</a>
+      <a href="https://rextle.carrd.co/" target="_blank" rel="noopener" class="btn btn-ghost">Carrd ↗</a>
+      <a href="https://tally.so/r/gDzz5N" target="_blank" rel="noopener" class="btn btn-primary">Commission me →</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  CURRENT STATUS — change only the number                ║
+  // ║    1 = Open        (accepting commissions)              ║
+  // ║    2 = In Progress (actively working on something)      ║
+  // ║    3 = Unavailable (not taking orders)                  ║
+  // ╚══════════════════════════════════════════════════════════╝
+  const STATUS = 3;
+
+  // ╔══════════════════════════════════════════════════════════╗
+  // ║  DATE TRACKING (only used when STATUS = 2)              ║
+  // ║  Set TRACK_DATE = true  to show countdown + dates       ║
+  // ║  Set TRACK_DATE = false to just show "Active"           ║
+  // ╚══════════════════════════════════════════════════════════╝
+  const TRACK_DATE = true;
+  const COMMISSION_START_DATE = "2026-06-08";
+
+  // Max days before refund kicks in (90 = 3 months)
+  const MAX_DAYS = 90;
+
+  // ============================================================
+  //   HOW TO UPDATE THE 3 WAITLIST SLOTS BELOW
+  // ============================================================
+  //   Each slot has two parts you can change:
+  //
+  //     status  →  a number from the list below
+  //     name    →  the person's name in quotes, e.g. "Alex"
+  //                (leave as "" if the slot has no one in it)
+  //
+  //   STATUS NUMBERS:
+  //     1  =  Next      → next up, usually at least 50% paid
+  //     2  =  Queued     → accepted into the waitlist
+  //     3  =  Empty      → open slot, no one assigned
+  //     4  =  Pending     → paused, e.g. delayed payment
+  //     5  =  Reserved    → held for someone, not yet confirmed/paid
+  //
+  //   Note: for status 3 (Empty) the name is ignored, so you can
+  //   leave it as "" either way.
+  //
+  //   EXAMPLE — a slot reserved for "Alex":
+  //     { status: 5, name: "Alex" },
+  // ============================================================
+  const WAITLIST = [
+    { status: 3, name: "" },  // Slot 1
+    { status: 3, name: "" },  // Slot 2
+    { status: 3, name: "" },  // Slot 3
+  ];
+
+  // ── State definitions ──────────────────────────────────────
+  const states = {
+    1: { cls: "state-open",        label: "Open",        desc: "Accepting new commissions. Fill out the form and I'll get back to you with a quote." },
+    2: { cls: "state-inprogress",  label: "In Progress", desc: "Currently working on an active commission. You can still join the waitlist." },
+    3: { cls: "state-unavailable", label: "Unavailable", desc: "Not accepting commissions or waitlist entries at this time. Check back later." }
+  };
+
+  const slotStates = {
+    1: { cls: "next",     label: "Next",     name: (n) => n },
+    2: { cls: "queued",   label: "Queued",   name: (n) => n },
+    3: { cls: "empty",    label: "Available", name: () => "Open slot" },
+    4: { cls: "pending",  label: "Pending",  name: (n) => n },
+    5: { cls: "reserved", label: "Reserved", name: (n) => n }
+  };
+
+  function init() {
+    // Current status
+    const s = states[STATUS] || states[3];
+    const card  = document.getElementById("current-card");
+    const label = document.getElementById("state-label");
+    const desc  = document.getElementById("state-desc");
+
+    card.className    = "current-card " + s.cls;
+    label.textContent = s.label;
+    desc.textContent  = s.desc;
+
+    if (STATUS === 2) {
+      if (TRACK_DATE) {
+        document.getElementById("inprogress-details").style.display = "block";
+        runCountdown();
+      } else {
+        // Show a simple "Active" pill instead of the countdown
+        const details = document.getElementById("inprogress-details");
+        details.style.display = "block";
+        details.innerHTML = '<div style="margin-top:8px; font-size:13px; color:var(--accent); background:rgba(91,140,255,0.1); border:1px solid rgba(91,140,255,0.2); border-radius:8px; padding:8px 14px; display:inline-block;">Active</div>';
+      }
+    }
+
+    // Waitlist slots
+    WAITLIST.forEach(function(slot, i) {
+      const pos = i + 1;
+      const ss  = slotStates[slot.status] || slotStates[3];
+      const el  = document.getElementById("wslot-" + pos);
+      if (!el) return;
+      el.className = "wslot " + ss.cls;
+      document.getElementById("wslot-" + pos + "-name").textContent = ss.name(slot.name);
+      document.getElementById("wslot-" + pos + "-tag").textContent  = ss.label;
+    });
+  }
+
+  function runCountdown() {
+    const start    = new Date(COMMISSION_START_DATE);
+    const now      = new Date();
+    const elapsed  = Math.floor((now - start) / 86400000);
+    const remaining = Math.max(0, MAX_DAYS - elapsed);
+    const pct      = Math.min(100, Math.round((elapsed / MAX_DAYS) * 100));
+    const delivery = new Date(start);
+    delivery.setDate(delivery.getDate() + MAX_DAYS);
+    const opts = { month: "short", day: "numeric", year: "numeric" };
+
+    document.getElementById("detail-started").textContent  = start.toLocaleDateString("en-GB", opts);
+    document.getElementById("detail-delivery").textContent = "~" + delivery.toLocaleDateString("en-GB", opts);
+    document.getElementById("elapsed-text").textContent    = elapsed === 1 ? "1 day" : elapsed + " days";
+    document.getElementById("remaining-text").textContent  = remaining === 0 ? "Due now" : "~" + remaining + " day" + (remaining === 1 ? "" : "s");
+
+    const bar = document.getElementById("elapsed-bar");
+    bar.style.width = pct + "%";
+    bar.className   = "bar-fill" + (pct >= 85 ? " danger" : pct >= 60 ? " warn" : "");
+  }
+
+  init();
+</script>
+</body>
+</html>
